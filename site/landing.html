@@ -1,0 +1,218 @@
+<!-- Injected into islands/public/index.html by build.mjs: hides the app chrome, floats a hero over the live demo,
+     and adds a strip of feature cards that steer the camera to where each feature shows on the map. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500..800,100,1&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style id="landing-css">
+  :root { --ink: #fff8ea; --dim: #c9d8e4; --amber: #ffd27a; --glass: rgba(8,22,38,0.66); --line: rgba(255,255,255,0.13);
+    --display: 'Fraunces', Georgia, serif; --sans: 'Instrument Sans', Inter, system-ui, sans-serif; }
+  #top, #roster, #panel, #timeline, #tourcard, #tip, #err, #empty { display: none !important; }
+  body { font-family: var(--sans); }
+  #dialog { z-index: 6; bottom: 168px; width: min(580px, calc(100% - 28px)); padding: 12px 14px; }
+  #dialog .say { max-height: 128px; font-size: 13.5px; } #dialog .portrait { width: 46px; height: 46px; font-size: 24px; }
+  #dialog form { display: none; } #dialog .choices { margin-bottom: 0; }
+  @media (min-width: 821px) { #dialog { left: auto; right: 24px; transform: none; width: 460px; bottom: 150px; } #dialog .say { max-height: 104px; } #dialog .choices button { font-size: 12px; padding: 5px 9px; } }
+  #labels { opacity: 0.92; }
+  canvas { cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .display { font-family: var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; }
+
+  #scrim { position: fixed; inset: 0; pointer-events: none; z-index: 2;
+    background: linear-gradient(180deg, rgba(6,26,48,0.82) 0%, rgba(6,26,48,0.55) 30%, rgba(6,26,48,0) 52%),
+                linear-gradient(0deg, rgba(6,26,48,0.6) 0%, rgba(6,26,48,0) 24%); }
+  #hero { position: fixed; z-index: 3; left: 50%; top: clamp(78px, 11vh, 120px); transform: translateX(-50%); width: min(760px, calc(100% - 40px)); text-align: center; }
+  #bar { position: fixed; z-index: 5; top: 0; left: 0; right: 0; height: 64px; padding: 0 22px; display: flex; align-items: center; gap: 12px; pointer-events: none; }
+  #bar > * { pointer-events: auto; }
+  #mark { display: flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; }
+  #mark svg { width: 30px; height: 30px; }
+  #mark span { font: 650 19px var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; letter-spacing: -0.01em; }
+  #hero h1 { font: 700 clamp(38px, 4.8vw, 68px)/1.02 var(--display); font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144; margin: 0 0 16px; color: var(--ink); letter-spacing: -0.02em; text-shadow: 0 4px 24px rgba(0,20,40,0.5); }
+  #hero p.lede { font-size: 17px; line-height: 1.55; color: var(--dim); margin: 0 auto 22px; max-width: 590px; text-shadow: 0 1px 8px rgba(0,20,40,0.6); }
+  .install { display: flex; max-width: 600px; margin: 0 auto; text-align: left; align-items: stretch; background: rgba(8,22,38,0.82); border: 1px solid rgba(255,255,255,0.16); border-radius: 14px; overflow: hidden; backdrop-filter: blur(10px); box-shadow: 0 14px 40px rgba(0,10,25,0.45); }
+  .install code { flex: 1; min-width: 0; padding: 15px 16px; font: 13.5px 'JetBrains Mono', monospace; color: #e8f1f7; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .install code::before { content: '$ '; color: #7be08f; }
+  .install button { flex: none; border: 0; border-radius: 0; padding: 0 22px; font: 600 15px var(--sans); color: #2b1a0a; background: linear-gradient(#ffd27a, #ffb347); cursor: pointer; transition: filter .15s; }
+  .install button:hover { filter: brightness(1.08); }
+  .install button.done { background: linear-gradient(#a6f0b4, #6fd487); }
+  .fine { margin: 11px 2px 0; font-size: 12.5px; color: rgba(201,216,228,0.8); }
+  .fine b { color: var(--ink); font-weight: 600; }
+
+  /* feature cards: a scroll-snapped strip; the centred card is the one the camera shows */
+  #features { position: fixed; z-index: 4; left: 0; right: 0; bottom: 18px; }
+  #strip { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 6px calc(50vw - 115px) 8px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); }
+  #strip::-webkit-scrollbar { display: none; }
+  .card { flex: none; width: 230px; scroll-snap-align: center; display: grid; grid-template-columns: 38px 1fr; gap: 3px 11px; align-items: start; text-align: left;
+    padding: 11px 13px 12px; border-radius: 14px; background: var(--glass); border: 1px solid var(--line); color: var(--ink); cursor: pointer;
+    backdrop-filter: blur(10px); position: relative; overflow: hidden; opacity: 0.72; transform: scale(0.94); transition: opacity .3s, transform .3s, border-color .3s, background .3s; font: inherit; }
+  .card:hover { opacity: 0.92; }
+  .card.on { opacity: 1; transform: none; border-color: rgba(255,210,122,0.75); background: rgba(10,30,52,0.86); box-shadow: 0 10px 30px rgba(0,10,25,0.4); }
+  .card .ic { grid-row: span 2; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 20px; background: rgba(255,255,255,0.08); }
+  .card.on .ic { background: rgba(255,210,122,0.18); }
+  .card b { font: 650 15.5px/1.2 var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; letter-spacing: -0.005em; }
+  .card span { font-size: 12.3px; line-height: 1.38; color: var(--dim); }
+  .card i { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--amber); }
+  .card.on.auto i { animation: dwell var(--dwell) linear forwards; }
+  @keyframes dwell { to { width: 100%; } }
+  #pager { display: flex; justify-content: center; align-items: center; gap: 4px; margin-bottom: 6px; }
+  #pager button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--glass); color: var(--ink); font: 16px/1 var(--sans); cursor: pointer; backdrop-filter: blur(8px); }
+  #pager button:hover { border-color: rgba(255,210,122,0.75); color: var(--amber); }
+  #count { min-width: 64px; text-align: center; font: 500 12px var(--sans); color: var(--dim); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+
+  #gh { display: flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; color: var(--ink); text-decoration: none; font: 500 13px var(--sans); background: rgba(8,22,38,0.5); border: 1px solid var(--line); backdrop-filter: blur(8px); }
+  #gh:hover { border-color: rgba(255,210,122,0.75); } #gh svg { width: 16px; height: 16px; }
+  #hint { margin-left: auto; font-size: 12px; color: rgba(232,241,247,0.75); background: rgba(8,22,38,0.5); padding: 6px 11px; border-radius: 999px; backdrop-filter: blur(8px); }
+  #hint i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #ffbf5a; margin-right: 6px; box-shadow: 0 0 0 0 rgba(255,191,90,0.7); animation: pulse 1.6s infinite; }
+  @keyframes pulse { to { box-shadow: 0 0 0 8px rgba(255,191,90,0); } }
+  #hero, #features, #bar { animation: rise .9s cubic-bezier(.2,.8,.2,1) both; }
+  #features { animation-delay: .25s; } #bar { animation-delay: .1s; }
+  @keyframes rise { from { opacity: 0; translate: 0 14px; } }
+
+  @media (max-width: 820px) {
+    #scrim { background: linear-gradient(180deg, rgba(6,26,48,0.9) 0%, rgba(6,26,48,0.7) 45%, rgba(6,26,48,0) 68%), linear-gradient(0deg, rgba(6,26,48,0.6) 0%, rgba(6,26,48,0) 22%); }
+    #hero { top: 64px; width: calc(100% - 32px); }
+    #bar { height: 56px; padding: 0 16px; }
+    #hero p.lede { font-size: 15px; margin-bottom: 16px; }
+    #hint { display: none; }
+    #dialog { bottom: 160px; }
+    .card { width: 220px; } #strip { padding-inline: calc(50vw - 110px); }
+    .install code { font-size: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .card, #hero, #features, #bar { transition: none; animation: none; } }
+</style>
+<div id="scrim"></div>
+<main id="hero">
+  <h1>Your coding agents,<br>as a living archipelago.</h1>
+  <p class="lede">Every project becomes an island and every session raises a building. Watch your Claude Code and Codex agents work in real time, sail between connected repos, and see storms roll in when CI fails.</p>
+  <div class="install"><code id="cmd">npx __SITE__/agent-atoll.tgz</code><button id="copy">Copy</button></div>
+  <p class="fine">Needs Node 18+. <b>Runs on your machine</b>: it reads <span class="mono">~/.claude</span> and <span class="mono">~/.codex</span>, and nothing is uploaded.</p>
+</main>
+<section id="features" aria-label="Features">
+  <div id="pager"><button id="prev" aria-label="Previous feature">‹</button><span id="count"></span><button id="next" aria-label="Next feature">›</button></div>
+  <div id="strip"></div>
+</section>
+<header id="bar">
+  <a id="mark" href="./" aria-label="Agent Atoll">
+    <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <!-- two breaking waves that double as an "AA"; the wavy crossbar is the waterline -->
+      <path d="M2.5 25.5c4.8 0 6.6-19.2 10.6-19.2 1.9 0 2.6 1.5 2.2 3.1M15.9 19.6c2.3-6.2 3.9-13.3 7.6-13.3 1.9 0 2.6 1.5 2.2 3.1" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M13.1 6.3c1.4 4.8 1.9 13.3 2.8 13.3M23.5 6.3c1.6 5.2 2.4 19.2 6 19.2" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M6.6 17.6c1.9 0 2.6-1.3 4.6-1.3s2.8 1.3 4.8 1.3 2.8-1.3 4.8-1.3 2.7 1.3 4.6 1.3" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+    </svg>
+    <span>Agent Atoll</span>
+  </a>
+  <div id="hint"><i></i>Live demo with sample projects · drag to look around</div>
+  <a id="gh" href="https://github.com/djfumberger/agent-atoll" aria-label="Source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+</header>
+<script>
+  document.getElementById('copy').onclick = async e => {
+    const b = e.currentTarget, text = document.getElementById('cmd').textContent;
+    try { await navigator.clipboard.writeText(text); } catch { prompt('Copy this:', text); return; }
+    b.textContent = 'Copied!'; b.classList.add('done');
+    setTimeout(() => { b.textContent = 'Copy'; b.classList.remove('done'); }, 1800);
+  };
+
+  // Each card names where on the demo map its feature can be seen, and optionally does something there.
+  const FEATURES = [
+    { ic: '🏝️', t: 'Islands grow', s: 'Each project is an island. Every session raises a building, from tent to tower.', at: ['harbor', 'web', 'server'], d: 50, act: 'replay' },
+    { ic: '🔨', t: 'Agents at work', s: 'Live sessions put up scaffolding and call out each tool as they use it.', at: ['harbor'], d: 22 },
+    { ic: '⛈️', t: 'Storms', s: 'A failing CI run rolls a thunderstorm in over the island.', at: ['tide-api'], d: 30 },
+    { ic: '⛵', t: 'Ships at anchor', s: 'Open PRs moor offshore, flying a flag for their checks.', at: ['harbor'], d: 36 },
+    { ic: '📦', t: 'Crates on the dock', s: 'Uncommitted files stack up on the beach. Unpushed commits load a cargo boat.', at: ['pixel-forge'], d: 8, dock: true },
+    { ic: '🌉', t: 'Bridges & sea routes', s: 'Nested repos join by bridges. Repos that share files trade by boat.', at: ['tide-api', 'tide-web', 'tide-docs'], d: 48 },
+    { ic: '🤝', t: 'Claude Code + Codex', s: 'Both agents build on the same islands. Codex buildings fly a pennant.', at: ['paper-planes'], d: 18 },
+    { ic: '🌫️', t: 'Fog of neglect', s: 'Projects left alone for three weeks drift into fog.', at: ['dotfiles'], d: 24 },
+    { ic: '🔔', t: 'The town crier', s: 'Nell rings the bell and reads the daily Gazette across every island.', at: ['you'], d: 20, act: 'crier' },
+    { ic: '✈️', t: 'Seaplane tour', s: 'Hop aboard for an automatic flight between your busiest islands.', act: 'tour', skipAuto: true },
+  ];
+  const DWELL = 9000;
+  const strip = document.getElementById('strip');
+  strip.innerHTML = FEATURES.map((f, i) => `<button class="card" data-i="${i}"><div class="ic">${f.ic}</div><b>${f.t}</b><span>${f.s}</span><i></i></button>`).join('');
+  strip.style.setProperty('--dwell', DWELL + 'ms');
+  const cards = [...strip.children];
+
+  addEventListener('isles-ready', ({ detail: { M, camera, controls, flyTo } }) => {
+    const I = window.__isles;
+    const byName = n => M.projects.find(p => p.name === n);
+    const centre = (names, dock) => {
+      if (dock) { const p = byName(names[0]), a = p.dockAngle + 0.18; return { x: p.cx + Math.cos(a) * p.R * 0.84, z: p.cz + Math.sin(a) * p.R * 0.84 }; }   // the crates sit just beside the dock
+      const ps = names.map(byName).filter(Boolean);
+      return ps.length ? { x: ps.reduce((a, p) => a + p.cx, 0) / ps.length, z: ps.reduce((a, p) => a + p.cz, 0) / ps.length } : { x: 0, z: 0 };
+    };
+
+    // Keep the focused island in the open sea between the hero and the cards (a vertical view offset),
+    // and pull back when that gap is short.
+    let want = FEATURES[0].d;
+    const gapScale = () => {
+      const top = document.getElementById('hero').getBoundingClientRect().bottom, bottom = strip.getBoundingClientRect().top;
+      const gap = Math.max(150, bottom - top);
+      camera.setViewOffset(innerWidth, innerHeight, 0, innerHeight / 2 - (top + bottom) / 2, innerWidth, innerHeight);
+      camera.updateProjectionMatrix();
+      return Math.min(2.4, Math.max(0.9, innerHeight * 0.48 / gap)) * (innerWidth > 820 ? 1 : 1.25);
+    };
+    let scale = gapScale();
+    addEventListener('resize', () => { scale = gapScale(); });
+    const c0 = centre(FEATURES[0].at);
+    controls.target.set(c0.x, 0.6, c0.z);
+    camera.position.set(c0.x + 0.62 * want * scale, 0.62 * want * scale, c0.z + 0.48 * want * scale);
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = -0.35;
+    controls.maxDistance = 160;
+
+    let active = -1, auto = true, timer = null, ignoreScroll = false;
+    const crier = () => I.NPCS.find(n => n.role === 'crier');
+    function focus(i, { scroll = true, quiet = false } = {}) {
+      if (i === active) return;
+      active = i;
+      const f = FEATURES[i];
+      cards.forEach((c, k) => { c.classList.toggle('on', k === i); c.classList.toggle('auto', auto && k === i); });
+      document.getElementById('count').textContent = `${i + 1} / ${FEATURES.length}`;
+      if (scroll) { ignoreScroll = true; cards[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); setTimeout(() => (ignoreScroll = false), 700); }
+      if (I.touring) I.endTour();
+      I.closeDialog();
+      if (f.act === 'tour') { I.startTour(); }
+      else {
+        const c = centre(f.at, f.dock);
+        flyTo(c.x, c.z, f.d * scale);
+        if (f.act === 'replay' && !quiet) { const play = document.getElementById('play'); if (play.textContent.trim() === '▶') setTimeout(() => play.click(), 900); }
+        if (f.act === 'crier') setTimeout(() => {
+          const n = crier(); if (!n || active !== i) return;
+          I.openDialog(n);
+          flyTo(n.pos.x, n.pos.z, f.d * scale);   // openDialog zooms right in; keep the island in view
+          setTimeout(() => [...document.querySelectorAll('#dialog .choices button')].find(b => /Gazette/.test(b.textContent))?.click(), 1400);
+        }, 900);
+      }
+      clearTimeout(timer);
+      if (auto) timer = setTimeout(next, DWELL);
+    }
+    function next() {
+      let i = active;
+      do i = (i + 1) % FEATURES.length; while (auto && FEATURES[i].skipAuto);
+      focus(i);
+    }
+    const stopAuto = () => { if (!auto) return; auto = false; clearTimeout(timer); cards.forEach(c => c.classList.remove('auto')); };
+
+    cards.forEach((c, i) => (c.onclick = () => { stopAuto(); focus(i); }));
+    document.getElementById('next').onclick = () => { stopAuto(); focus((Math.max(active, 0) + 1) % FEATURES.length); };
+    document.getElementById('prev').onclick = () => { stopAuto(); focus((active - 1 + FEATURES.length) % FEATURES.length); };
+    addEventListener('keydown', e => {
+      if (e.target.closest('input, textarea')) return;
+      if (e.key === 'ArrowRight') { stopAuto(); focus((active + 1) % FEATURES.length); }
+      if (e.key === 'ArrowLeft') { stopAuto(); focus((active - 1 + FEATURES.length) % FEATURES.length); }
+    });
+    // Swiping or wheeling the strip picks whichever card lands in the middle.
+    let settle;
+    strip.addEventListener('scroll', () => {
+      if (ignoreScroll) return;
+      stopAuto();
+      clearTimeout(settle);
+      settle = setTimeout(() => {
+        const mid = strip.getBoundingClientRect().left + strip.clientWidth / 2;
+        const i = cards.reduce((b, c, k) => Math.abs(c.getBoundingClientRect().left + c.offsetWidth / 2 - mid) < Math.abs(cards[b].getBoundingClientRect().left + cards[b].offsetWidth / 2 - mid) ? k : b, 0);
+        focus(i, { scroll: false });
+      }, 160);
+    }, { passive: true });
+    strip.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.preventDefault(); strip.scrollBy({ left: e.deltaY }); } }, { passive: false });
+    document.querySelector('canvas').addEventListener('pointerdown', stopAuto);
+
+    focus(0, { quiet: true });
+  });
+</script>

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Atoll</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --panel: rgba(16, 34, 52, 0.82); --edge: rgba(255,255,255,0.12); --ink: #f3efe4; --dim: #a7b8c6;
+    --amber: #ffbf5a; --green: #7be08f; --grey: #9aa3ab; --wood: #7a4b27; --wood-hi: #a26a3a; --cream: #fff3d6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0f3b66; color: var(--ink); font: 13px/1.45 Inter, system-ui, sans-serif; }
+  canvas { display: block; }
+  .title { font-family: Fredoka, Inter, sans-serif; font-weight: 600; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .box { background: var(--panel); border: 1px solid var(--edge); border-radius: 14px; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,20,40,0.35); }
+
+  #top { position: fixed; top: 14px; left: 14px; right: 14px; display: flex; gap: 10px; align-items: center; pointer-events: none; }
+  #top > * { pointer-events: auto; }
+  #brand { padding: 7px 14px; font-size: 20px; background: linear-gradient(var(--wood-hi), var(--wood)); border: 2px solid #4e2e15; color: var(--cream); text-shadow: 0 2px 0 #4e2e15; border-radius: 12px; }
+  #stats { padding: 8px 14px; display: flex; gap: 16px; color: var(--dim); }
+  #stats b { color: var(--ink); font-weight: 600; }
+  #tools { margin-left: auto; padding: 5px; display: flex; gap: 4px; align-items: center; }
+  button, input { font: inherit; color: var(--ink); }
+  button { background: rgba(255,255,255,0.08); border: 1px solid transparent; border-radius: 9px; padding: 6px 11px; cursor: pointer; font-family: Fredoka, Inter, sans-serif; font-weight: 500; }
+  button:hover { background: rgba(255,255,255,0.16); }
+  button.on { border-color: var(--amber); color: var(--amber); }
+  #search { background: rgba(0,0,0,0.25); border: 1px solid var(--edge); border-radius: 9px; padding: 6px 10px; width: 180px; }
+
+  #roster { position: fixed; top: 72px; left: 14px; width: 252px; max-height: calc(100% - 170px); overflow: auto; padding: 10px; }
+  #roster h3 { margin: 6px 4px; font-size: 13px; color: var(--dim); }
+  .row { display: flex; align-items: center; gap: 8px; padding: 5px 7px; border-radius: 8px; cursor: pointer; }
+  .row:hover { background: rgba(255,255,255,0.08); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; box-shadow: 0 0 0 2px rgba(0,0,0,0.25); }
+  .row .meta { margin-left: auto; color: var(--dim); font-size: 11px; white-space: nowrap; }
+  .row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  #panel { position: fixed; top: 72px; right: 14px; width: 370px; max-height: calc(100% - 170px); overflow: auto; padding: 16px; display: none; }
+  #panel h2 { margin: 0 0 2px; font-size: 18px; padding-right: 24px; }
+  #panel .sub { color: var(--dim); margin-bottom: 10px; word-break: break-all; }
+  #panel .kv { display: grid; grid-template-columns: 110px 1fr; gap: 3px 8px; margin: 8px 0; }
+  #panel .kv span:nth-child(odd) { color: var(--dim); }
+  #panel .prompt { background: rgba(0,0,0,0.22); border-radius: 10px; padding: 9px 10px; margin: 8px 0; white-space: pre-wrap; color: #e3ddcc; }
+  #panel .actions { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
+  #panel .actions button { background: rgba(255,191,90,0.16); color: var(--amber); }
+  #panel h4 { margin: 14px 0 4px; font-size: 13px; color: var(--dim); }
+  #panel a { color: #8fd3ff; }
+  .bar { display: flex; height: 9px; border-radius: 5px; overflow: hidden; margin: 4px 0 3px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--dim); font-size: 11px; }
+  .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+  #close { position: absolute; top: 10px; right: 10px; padding: 3px 8px; }
+
+  #timeline { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(720px, calc(100% - 28px)); padding: 8px 14px; display: flex; align-items: center; gap: 10px; }
+  #timeline input { flex: 1; accent-color: var(--amber); }
+  #date { width: 80px; text-align: right; color: var(--dim); }
+  #help { color: var(--dim); font-size: 11px; }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .lbl { position: absolute; left: 0; top: 0; white-space: nowrap; pointer-events: none; }
+  .lbl.island { font: 600 12px Fredoka, sans-serif; color: var(--cream); background: linear-gradient(var(--wood-hi), var(--wood)); border: 1.5px solid #4e2e15; padding: 1px 8px 2px; border-radius: 6px; text-shadow: 0 1px 0 #4e2e15; box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+  .lbl.island .n { margin-left: 5px; font-size: 11px; }
+  .lbl.region { font: 700 22px Fredoka, sans-serif; color: rgba(255,255,255,0.85); text-shadow: 0 2px 8px rgba(0,30,60,0.6); letter-spacing: 0.02em; }
+  .lbl.bubble { background: #fffaf0; color: #2b2418; font: 11px 'JetBrains Mono', monospace; padding: 2px 7px; border-radius: 8px; box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+  #tip { position: fixed; pointer-events: none; padding: 7px 10px; display: none; max-width: 320px; border-radius: 10px; }
+  #err { position: fixed; inset: 0; display: none; place-items: center; text-align: center; }
+  #dialog { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); width: min(700px, calc(100% - 28px)); padding: 14px 16px; display: none; gap: 14px; align-items: flex-start; border: 2px solid rgba(255,230,180,0.35); }
+  #dialog .portrait { flex: none; width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; font-size: 30px; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2), 0 0 0 3px #fff3d6; }
+  #dialog .dbody { flex: 1; min-width: 0; }
+  #dialog .who { margin-bottom: 4px; } #dialog .who b { font-size: 16px; color: var(--cream); } #dialog .who span { color: var(--dim); margin-left: 6px; }
+  #dialog .say { min-height: 42px; max-height: 190px; overflow: auto; white-space: pre-wrap; font-size: 14px; line-height: 1.5; cursor: pointer; }
+  #dialog .say .you { display: block; color: var(--amber); font-size: 12px; margin-bottom: 4px; }
+  #dialog .say .thinking::after { content: '…'; animation: dots 1s steps(4) infinite; display: inline-block; width: 1.2em; overflow: hidden; vertical-align: bottom; }
+  @keyframes dots { from { width: 0; } to { width: 1.2em; } }
+  #dialog .choices { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 8px; }
+  #dialog .choices button { background: rgba(255,243,214,0.1); font-size: 12.5px; }
+  #dialog .choices button:hover { background: rgba(255,191,90,0.22); color: var(--amber); }
+  #dialog .choices button:disabled { opacity: 0.4; cursor: default; }
+  #dialog form { display: flex; gap: 6px; } #dialog input { flex: 1; background: rgba(0,0,0,0.25); border: 1px solid var(--edge); border-radius: 9px; padding: 7px 10px; }
+  #dialog .dclose { position: absolute; top: 8px; right: 8px; padding: 2px 8px; }
+  #tourcard { position: fixed; top: 76px; left: 50%; transform: translateX(-50%); width: min(520px, calc(100% - 28px)); padding: 12px 16px; display: none; text-align: center; animation: cardIn 0.6s ease-out; }
+  #tourcard .title { font-size: 22px; color: var(--cream); }
+  #tourcard .meta { color: var(--dim); margin: 2px 0 6px; }
+  #tourcard .line { font-size: 14px; }
+  @keyframes cardIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @media (max-width: 760px) { #roster, #stats, #help { display: none; } #panel { left: 14px; width: auto; } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="labels"></div>
+<div id="top">
+  <div id="brand" class="title">Agent Atoll</div>
+  <div id="stats" class="box"></div>
+  <div id="tools" class="box">
+    <input id="search" list="projlist" placeholder="Sail to island…"><datalist id="projlist"></datalist>
+    <button id="gazette" title="Town crier's Gazette (G)">📰 Gazette</button>
+    <button id="tour" title="Seaplane tour (T)">✈ Tour</button>
+    <button id="weather" class="on" title="Weather (W)">Weather</button>
+    <button id="night" title="Night (N)">Night</button>
+    <button id="lbls" class="on" title="Island labels: all / on hover / off (L)">Labels: All</button>
+  </div>
+</div>
+<div id="roster" class="box"></div>
+<div id="panel" class="box"><button id="close">✕</button><div id="pbody"></div></div>
+<div id="timeline" class="box">
+  <button id="play" title="Replay history (Space)">▶</button>
+  <input id="time" type="range" min="0" max="1" step="0.01" value="1">
+  <span id="date" class="mono"></span>
+  <span id="help">drag pan · right-drag orbit · wheel zoom</span>
+</div>
+<div id="dialog" class="box"><div class="portrait"></div><div class="dbody"><div class="who"></div><div class="say"></div><div class="choices"></div><form><input maxlength="500"><button>Ask</button></form></div><button class="dclose">✕</button></div>
+<div id="tourcard" class="box"></div>
+<div id="tip" class="box"></div>
+<div id="empty" style="position:fixed;inset:0;display:none;place-items:center;text-align:center;pointer-events:none"><div class="box" style="padding:22px 26px;max-width:440px;pointer-events:auto"><div class="title" style="font-size:22px">Open sea, for now</div><p>No coding-agent history found yet in <span class="mono">~/.claude</span> or <span class="mono">~/.codex</span>.</p><p style="color:var(--dim)">Run a session with Claude Code or Codex in any project folder and your first island will rise here. This page checks again every 30 seconds.</p></div></div>
+<div id="err"><div class="box" style="padding:22px"><div class="title" style="font-size:20px">Lost at sea</div><p>Start the local server: <span class="mono">node islands/server.mjs</span></p></div></div>
+<script type="module" src="islands.js"></script>
+</body>
+</html>

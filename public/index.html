@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude City</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --panel: rgba(22, 26, 34, 0.88); --panel-edge: rgba(255,255,255,0.08); --ink: #e9e6dc; --dim: #9aa0a8;
+    --amber: #ffb547; --green: #6ee08a; --blue: #7cb7ff; --grey: #8c8f96;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0d1424; color: var(--ink); font: 13px/1.4 'IBM Plex Sans', system-ui, sans-serif; }
+  canvas { display: block; }
+  .pixel { font-family: 'Silkscreen', monospace; letter-spacing: 0.02em; }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .box { background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 6px; backdrop-filter: blur(6px); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+
+  #top { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; gap: 10px; align-items: center; pointer-events: none; }
+  #top > * { pointer-events: auto; }
+  #brand { padding: 8px 12px; font-size: 16px; }
+  #stats { padding: 8px 12px; display: flex; gap: 14px; color: var(--dim); }
+  #stats b { color: var(--ink); font-weight: 600; }
+  #tools { margin-left: auto; padding: 4px; display: flex; gap: 4px; align-items: center; }
+  button, input { font: inherit; color: var(--ink); }
+  button { background: rgba(255,255,255,0.06); border: 1px solid transparent; border-radius: 4px; padding: 5px 9px; cursor: pointer; }
+  button:hover { background: rgba(255,255,255,0.12); }
+  button.on { border-color: var(--amber); color: var(--amber); }
+  #search { background: rgba(0,0,0,0.3); border: 1px solid var(--panel-edge); border-radius: 4px; padding: 5px 8px; width: 170px; }
+
+  #roster { position: fixed; top: 64px; left: 12px; width: 250px; max-height: calc(100% - 160px); overflow: auto; padding: 10px; }
+  #roster h3 { margin: 6px 0 6px; font-size: 11px; color: var(--dim); font-weight: 500; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 4px; cursor: pointer; }
+  .row:hover { background: rgba(255,255,255,0.07); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .row .meta { margin-left: auto; color: var(--dim); font-size: 11px; white-space: nowrap; }
+  .row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  #panel { position: fixed; top: 64px; right: 12px; width: 360px; max-height: calc(100% - 160px); overflow: auto; padding: 14px; display: none; }
+  #panel h2 { margin: 0 0 2px; font-size: 15px; }
+  #panel .sub { color: var(--dim); margin-bottom: 10px; word-break: break-all; }
+  #panel .kv { display: grid; grid-template-columns: 110px 1fr; gap: 3px 8px; margin: 8px 0; }
+  #panel .kv span:nth-child(odd) { color: var(--dim); }
+  #panel .prompt { background: rgba(0,0,0,0.25); border-radius: 4px; padding: 8px; margin: 8px 0; white-space: pre-wrap; color: #d6d2c6; }
+  #panel .actions { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  #panel .actions button { background: rgba(255,181,71,0.14); color: var(--amber); }
+  #panel h4 { margin: 14px 0 4px; font-size: 11px; color: var(--dim); font-weight: 500; }
+  .bar { display: flex; height: 8px; border-radius: 3px; overflow: hidden; margin: 4px 0 2px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--dim); font-size: 11px; }
+  .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+  #close { position: absolute; top: 8px; right: 8px; }
+
+  #timeline { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(720px, calc(100% - 24px)); padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
+  #timeline input { flex: 1; accent-color: var(--amber); }
+  #date { width: 92px; text-align: right; color: var(--dim); }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .lbl { position: absolute; left: 0; top: 0; white-space: nowrap; transform-origin: 0 0; pointer-events: none; }
+  .lbl.district { font: 10px 'Silkscreen', monospace; color: #fff; text-shadow: 0 1px 0 #000, 0 0 3px #000; }
+  .lbl.region { font: 15px 'Silkscreen', monospace; color: #fff6dc; text-shadow: 0 2px 0 rgba(0,0,0,0.6), 0 0 6px rgba(0,0,0,0.6); }
+  .lbl.bubble { background: #fff8e6; color: #2b2418; font: 11px 'IBM Plex Mono', monospace; padding: 2px 6px; border-radius: 3px; box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+  .lbl.bubble::after { content: ''; position: absolute; left: 8px; bottom: -4px; border: 4px solid transparent; border-bottom: 0; border-top-color: #fff8e6; }
+  #tip { position: fixed; pointer-events: none; padding: 6px 9px; display: none; max-width: 320px; }
+  #help { color: var(--dim); font-size: 11px; padding: 0 6px; }
+  #err { position: fixed; inset: 0; display: none; place-items: center; text-align: center; }
+  @media (max-width: 760px) { #roster, #stats, #help { display: none; } #panel { left: 12px; width: auto; } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="labels"></div>
+<div id="top">
+  <div id="brand" class="box pixel">Claude City</div>
+  <div id="stats" class="box"></div>
+  <div id="tools" class="box">
+    <input id="search" list="projlist" placeholder="Jump to project…"><datalist id="projlist"></datalist>
+    <button id="rotL" title="Rotate (Q)">⟲</button><button id="rotR" title="Rotate (E)">⟳</button>
+    <button id="night" title="Night (N)">Night</button>
+    <button id="retro" class="on" title="Pixel shader (R)">Retro</button>
+    <button id="lbls" class="on" title="Labels (L)">Labels</button>
+  </div>
+</div>
+<div id="roster" class="box"></div>
+<div id="panel" class="box"><button id="close">✕</button><div id="pbody"></div></div>
+<div id="timeline" class="box">
+  <button id="play" title="Replay history (Space)">▶</button>
+  <input id="time" type="range" min="0" max="1" step="0.01" value="1">
+  <span id="date" class="mono"></span>
+  <span id="help">drag pan · wheel zoom · Q/E rotate</span>
+</div>
+<div id="tip" class="box"></div>
+<div id="err"><div class="box" style="padding:20px"><div class="pixel" style="font-size:16px">City offline</div><p>Start the local server: <span class="mono">node server.mjs</span></p></div></div>
+<script type="module" src="city.js"></script>
+</body>
+</html>
