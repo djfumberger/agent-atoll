@@ -4,50 +4,55 @@ Your Claude Code and Codex history as a living archipelago. Every project folder
 
 ![Agent Atoll](https://raw.githubusercontent.com/djfumberger/agent-atoll/main/docs/screenshot.png)
 
-## Quick start
+## Run it
 
 ```
 npx agent-atoll
 ```
 
-Demo with sample projects: https://agent-atoll.pages.dev
+That's it. Your browser opens on your own archipelago. You need Node 18 or newer.
 
-You need Node 18 or newer. It runs locally on `127.0.0.1`, reads `~/.claude` and `~/.codex`, and uploads nothing. The first run scans your history, which can take a minute. After that it's cached in `~/.agent-atoll`.
+Everything stays on your machine: it reads `~/.claude` and `~/.codex` and uploads nothing. The first run takes a minute to scan your history, and later runs are quick.
 
-| Option | |
-|---|---|
-| `--only claude` / `--only codex` | Show just one agent's history (default: both) |
-| `--exclude a,b` | Hide projects by folder name or absolute path (also `~/.agent-atoll/config.json`: `{"exclude": [...]}`) |
+Want a look first? Try the demo with sample projects at https://agent-atoll.pages.dev
 
-`~/.agent-atoll/config.json` can also hold `"aliases": { "ac": "acme" }` so `ac-api` and `acme-web` share one archipelago.
-| `--port <n>` | Port to try first (default 4778; the next free port is used if it's taken) |
-| `--no-open` | Don't open the browser |
+## What you can do
 
-Optional extras:
-- **`gh` CLI** (logged in): PR ships and CI storms.
-- **`claude` on PATH**: villagers and the town crier can talk.
-- **`zstd`**: needed on Node versions without built-in zstd, to read compressed Codex history.
+- **Explore.** Drag to pan, right-drag to orbit, scroll to zoom. Click an island or a building for its sessions and stats.
+- **Watch agents work.** Live sessions put up scaffolding and show the tool they're using. The list on the left shows who's working and who's waiting on you.
+- **Jump to an agent.** Click ↗ next to a live agent to bring its terminal tab to the front.
+- **Resume a session.** Open any building and pick "Resume in Terminal".
+- **Read the weather.** A failing CI run brings storms, open PRs anchor as ships, and uncommitted work piles up as crates on the docks.
+- **Talk to the locals.** Click a villager to ask about the project, or read the town crier's Gazette for a summary of everything.
+- **Take the tour.** Hop in the seaplane for a flight over your busiest islands.
 
-"Resume in Terminal" opens Terminal.app on macOS. Elsewhere it copies the command for you to paste.
-
-**Focus terminal** (the ↗ next to each live agent, or the button on a live session) brings the tab that agent is running in to the front: the exact tab in Terminal.app and iTerm2, or just the app for other terminals. macOS only, and not inside tmux.
-
-**Codex:** sessions come from `~/.codex/sessions` (plain or `.zst` rollouts). They join the same islands as Claude sessions, fly a small pennant, and resume with `codex resume <id>`. Codex has no live-status file, so a rollout written in the last two minutes counts as live.
-
-## Development
+## Options
 
 ```
-node islands/server.mjs        # islands on :4778
-node site/build.mjs            # landing page + tarball into site/dist (SITE_URL=… to change the install URL)
+npx agent-atoll --only claude        # just Claude Code (or --only codex)
+npx agent-atoll --exclude scratch,tmp
+npx agent-atoll --port 5000 --no-open
 ```
 
-## Files
+To always hide some projects, or to group related repos into one archipelago, create `~/.agent-atoll/config.json`:
 
-- `bin/agent-atoll.mjs`: the CLI. Parses options, starts the server and opens the browser.
-- `server.mjs`: a local HTTP server that serves the app and its JSON APIs (`/api/city`, `/api/live`, `/api/health`, `/api/npc`, `/api/crier`, `POST /api/open`).
-- `scan.mjs` and `codex.mjs`: read Claude Code and Codex history into projects, sessions and live state, cached in `~/.agent-atoll`.
-- `health.mjs`: git status plus GitHub PRs and CI via `gh`, which drive the weather and harbour life.
-- `npc.mjs`: villager and town-crier answers via a tool-less `claude -p`.
-- `islands/public/`: the Three.js app (`islands.js`) and its baked building models.
-- `tools/`: the Blender house generator and the model baker.
-- `site/`: the landing page with its sample-data demo (`node site/build.mjs`).
+```json
+{
+  "exclude": ["scratch", "/Users/you/old-stuff"],
+  "aliases": { "ac": "acme" }
+}
+```
+
+With that alias, `ac-api` and `acme-web` share an archipelago.
+
+## Optional extras
+
+- **`gh` CLI, logged in:** PR ships and CI storms.
+- **`claude` on your PATH:** villagers and the town crier can answer questions.
+- **`zstd`:** needed to read compressed Codex history on Node versions older than 23.8.
+
+Opening and focusing terminals works on macOS (Terminal.app and iTerm2 get the exact tab). On other systems, "Resume" copies the command for you to paste instead.
+
+## License
+
+MIT. Want to hack on it? See [CONTRIBUTING.md](CONTRIBUTING.md).
