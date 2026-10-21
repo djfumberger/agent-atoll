@@ -18,7 +18,7 @@ const landing = fs.readFileSync(path.join(SITE, 'landing.html'), 'utf8').replace
 const swap = (from, to) => { if (!html.includes(from)) throw new Error(`index.html changed: missing ${from}`); html = html.replace(from, to); };
 swap('<title>Agent Atoll</title>', `<title>Agent Atoll</title>
 <meta name="description" content="Your Claude Code and Codex projects as a living archipelago. Runs locally with one npx command.">
-<meta property="og:title" content="Agent Atoll"><meta property="og:description" content="Your coding agents, as a living archipelago.">
+<meta property="og:title" content="Agent Atoll"><meta property="og:description" content="Your agents, as a living archipelago.">
 <meta property="og:image" content="${SITE_URL}/og.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg">`);
 swap('<script type="module" src="islands.js"></script>', `${landing}\n<script src="demo.js"></script>\n<script type="module" src="islands.js"></script>`);
