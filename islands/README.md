@@ -65,3 +65,14 @@ Nell (or whoever's on duty) stands on the Home Isles with a bell and a scroll. T
 ## Water
 
 Distance-to-shore is baked into a 1024² half-float texture whenever an island changes size. Before this, every pixel looped over every island. Noise, lace, caustics and the wave normal map are tileable textures generated once at startup. The seabed gets animated caustics in the terrain shader, and the pixel ratio is capped at 1.5.
+
+## Building models
+
+Houses, cabins, workshops, towers and tents are low-poly models built in Blender by `tools/blender/build_houses.py`. It's one seeded script, so the output is deterministic. Every face carries a material role (wall, roof, wood, trim, stone, door, glass, accent or metal), so the app tints walls and roofs per building and lights each window at night. Towers and houses are stacked from storey pieces to match the session's size.
+
+```
+/Applications/Blender.app/Contents/MacOS/Blender -b --python tools/blender/build_houses.py   # → tools/blender/out/*.glb + preview.png
+node tools/bake-houses.mjs                                                                   # → islands/public/models/houses.json
+```
+
+Add `?houses=classic` to the URL to see the original box-built prefabs. The app also falls back to those if the model file is missing.

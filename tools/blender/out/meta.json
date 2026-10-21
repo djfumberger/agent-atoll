@@ -1,0 +1,165 @@
+{
+ "roles": {
+  "wall": "#f3ead8",
+  "roof": "#b5532f",
+  "wood": "#8b5a2b",
+  "trim": "#5e3d24",
+  "stone": "#a39d92",
+  "door": "#4a2f1a",
+  "glass": "#2a3a4c",
+  "accent": "#d9534f",
+  "metal": "#3a3f45"
+ },
+ "models": {
+  "house_ground_a": {
+   "kind": "house",
+   "h": 0.34,
+   "storey": 0.34,
+   "tris": 398
+  },
+  "house_upper_a": {
+   "kind": "house",
+   "h": 0.34,
+   "storey": 0.34,
+   "tris": 416
+  },
+  "house_ground_b": {
+   "kind": "house",
+   "h": 0.34,
+   "storey": 0.34,
+   "tris": 522
+  },
+  "house_upper_b": {
+   "kind": "house",
+   "h": 0.34,
+   "storey": 0.34,
+   "tris": 380
+  },
+  "house_roof_a": {
+   "kind": "house",
+   "h": 0.29,
+   "tris": 236
+  },
+  "house_roof_b": {
+   "kind": "house",
+   "h": 0.35,
+   "tris": 254
+  },
+  "house_roof_c": {
+   "kind": "house",
+   "h": 0.28,
+   "tris": 52
+  },
+  "cabin_a": {
+   "kind": "cabin",
+   "h": 0.614,
+   "tris": 686
+  },
+  "cabin_b": {
+   "kind": "cabin",
+   "h": 0.64,
+   "tris": 622
+  },
+  "cabin_c": {
+   "kind": "cabin",
+   "h": 0.6739999999999999,
+   "tris": 704
+  },
+  "tent_a": {
+   "kind": "tent",
+   "h": 0.5,
+   "tris": 176
+  },
+  "tent_b": {
+   "kind": "tent",
+   "h": 0.62,
+   "tris": 232
+  },
+  "workshop_a": {
+   "kind": "workshop",
+   "h": 0.8,
+   "smoke": [
+    0.2399,
+    0.83,
+    -0.0145
+   ],
+   "tris": 736
+  },
+  "workshop_b": {
+   "kind": "workshop",
+   "h": 0.8400000000000001,
+   "smoke": [
+    0.2755,
+    0.87,
+    0.0149
+   ],
+   "tris": 752
+  },
+  "workshop_big": {
+   "kind": "workshop",
+   "h": 1.08,
+   "smoke": [
+    0.2596,
+    1.11,
+    -0.021
+   ],
+   "tris": 718
+  },
+  "tower_base": {
+   "kind": "tower",
+   "h": 0.36,
+   "storey": 0.36,
+   "tris": 280
+  },
+  "tower_floor_a": {
+   "kind": "tower",
+   "h": 0.3,
+   "storey": 0.3,
+   "tris": 300
+  },
+  "tower_floor_b": {
+   "kind": "tower",
+   "h": 0.3,
+   "storey": 0.3,
+   "tris": 436
+  },
+  "tower_top_a": {
+   "kind": "tower",
+   "h": 0.62,
+   "tris": 178
+  },
+  "tower_top_b": {
+   "kind": "tower",
+   "h": 0.56,
+   "tris": 120
+  },
+  "roundtower_base": {
+   "kind": "round",
+   "h": 0.36,
+   "storey": 0.36,
+   "tris": 422
+  },
+  "roundtower_floor_a": {
+   "kind": "round",
+   "h": 0.32,
+   "storey": 0.32,
+   "tris": 220
+  },
+  "roundtower_floor_b": {
+   "kind": "round",
+   "h": 0.32,
+   "storey": 0.32,
+   "tris": 244
+  },
+  "roundtower_dome": {
+   "kind": "round",
+   "h": 0.32,
+   "tris": 146
+  },
+  "roundtower_cone": {
+   "kind": "round",
+   "h": 0.62,
+   "tris": 160
+  }
+ }
+}

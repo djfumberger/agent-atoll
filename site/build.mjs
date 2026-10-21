@@ -25,6 +25,7 @@ swap('<script type="module" src="islands.js"></script>', `${landing}\n<script sr
 fs.writeFileSync(path.join(OUT, 'index.html'), html);
 
 fs.copyFileSync(path.join(APP, 'islands.js'), path.join(OUT, 'islands.js'));
+fs.cpSync(path.join(APP, 'models'), path.join(OUT, 'models'), { recursive: true });
 fs.copyFileSync(path.join(SITE, 'demo.js'), path.join(OUT, 'demo.js'));
 // favicon: the header's mono mark, cream on a deep-sea tile
 const mark = landing.match(/<svg class="mark"[^]*?>([^]*?)<\/svg>/)[1].replaceAll('currentColor', '#fff8ea');

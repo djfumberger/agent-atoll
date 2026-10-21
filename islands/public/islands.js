@@ -189,9 +189,26 @@ class Kit {
     const g = geo.clone();
     _m.compose(_v.set(x, y, z), _q.setFromEuler(_e.set(rx, ry, rz)), _s.set(sx, sy, sz));
     g.applyMatrix4(this.base.clone().multiply(_m));
-    const n = g.attributes.position.count, c = new THREE.Color(color);
-    const col = new Float32Array(n * 3), org = new Float32Array(n * 3), born = new Float32Array(n).fill(this.born), gl = new Float32Array(n).fill(glow);
-    for (let i = 0; i < n; i++) { c.toArray(col, i * 3); this.origin.toArray(org, i * 3); }
+    const n = g.attributes.position.count, c = new THREE.Color(color), col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) c.toArray(col, i * 3);
+    this.push(g, col, glow, leaf);
+  }
+  // A v2 house piece (see loadHouses) at height y: role colours (some tinted per building), each window pane lit or not.
+  piece(name, y, { ry = 0, tint = {}, lit = 0, r = Math.random } = {}) {
+    const m = HM.models[name], g = m.geo.clone(), n = m.role.length;
+    _m.compose(_v.set(0, y, 0), _q.setFromAxisAngle(Y, ry), ONE);
+    g.applyMatrix4(this.base.clone().multiply(_m));
+    const pal = HM.roles.map((k, i) => (tint[k] ? new THREE.Color(tint[k]) : HM.def[i]));
+    const on = Array.from({ length: m.panes }, () => (r() < lit ? 1 : 0.5));
+    const col = new Float32Array(n * 3), glow = new Float32Array(n);
+    for (let i = 0; i < n; i++) { pal[m.role[i]].toArray(col, i * 3); if (m.pane[i] >= 0) glow[i] = on[m.pane[i]]; }
+    this.push(g, col, glow, false);
+    return HM.meta[name];
+  }
+  push(g, col, glow, leaf) {   // glow: a constant, or per-vertex Float32Array
+    const n = g.attributes.position.count;
+    const org = new Float32Array(n * 3), born = new Float32Array(n).fill(this.born), gl = glow instanceof Float32Array ? glow : new Float32Array(n).fill(glow);
+    for (let i = 0; i < n; i++) this.origin.toArray(org, i * 3);
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
     g.setAttribute('aOrigin', new THREE.BufferAttribute(org, 3));
     g.setAttribute('aBorn', new THREE.BufferAttribute(born, 1));
@@ -212,9 +229,52 @@ class Kit {
   }
 }
 
+// ---------- houses: Blender models by default; ?houses=classic keeps the original box prefabs ----------
+// Built in Blender by tools/blender/build_houses.py, baked by tools/bake-houses.mjs into models/houses.json: low-poly,
+// a little organic, every face tagged with a material role (wall, roof, wood, trim, stone, door, glass, accent, metal).
+const HOUSES = new URLSearchParams(location.search).get('houses') !== 'classic';
+let HM = null;
+async function loadHouses() {
+  const j = await fetch('models/houses.json').then(r => r.json());
+  const glass = j.roles.indexOf('glass');
+  HM = { meta: j.meta, roles: j.roles, def: j.roles.map(n => new THREE.Color(j.colors[n])), models: {} };
+  for (const [name, m] of Object.entries(j.models)) {
+    // window panes = glass triangles joined by shared vertices, so each window lights up on its own
+    const up = new Map(), find = v => { while (up.get(v) !== v) v = up.get(v); return v; };
+    for (let i = 0; i < m.idx.length; i += 3) if (m.role[m.idx[i]] === glass) {
+      const t = m.idx.slice(i, i + 3);
+      for (const v of t) if (!up.has(v)) up.set(v, v);
+      up.set(find(t[1]), find(t[0])); up.set(find(t[2]), find(t[0]));
+    }
+    const n = m.idx.length, pos = new Float32Array(n * 3), role = new Uint8Array(n), pane = new Int16Array(n).fill(-1), ids = new Map();
+    m.idx.forEach((v, i) => {
+      for (let k = 0; k < 3; k++) pos[i * 3 + k] = m.pos[v * 3 + k];
+      role[i] = m.role[v];
+      if (up.has(v)) { const p = find(v); if (!ids.has(p)) ids.set(p, ids.size); pane[i] = ids.get(p); }
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.computeVertexNormals();   // non-indexed, so these are the flat face normals
+    HM.models[name] = { geo, role, pane, panes: ids.size };
+  }
+}
+// Stack pieces bottom-up (storeys turn 180° at random so towers don't repeat); returns the top height and the last piece's meta.
+function hStack(k, r, lit, kind, names) {
+  const [w, f, st] = V2[kind], tint = { wall: w && pick(r, w), roof: f && pick(r, f), stone: st && pick(r, st), wood: pick(r, WOOD), accent: pick(r, ACCENTS) };
+  let y = 0, m;
+  names.forEach((nm, i) => { m = k.piece(nm, y, { ry: i && i < names.length - 1 && r() < 0.5 ? Math.PI : 0, tint, lit, r }); y += m.storey || 0; });
+  return { top: y + m.h, m };
+}
+
 // ---------- prefabs (all relative to the current kit frame, ground at y=0) ----------
 const WOOD = ['#8b5a2b', '#7a4c22'], ROOFS = ['#b5532f', '#3f7f8c', '#d1802e', '#6b5b95', '#a33b3b'], WALLS = ['#f3ead8', '#ecd9b6', '#dfe8e3', '#f2d8c6', '#e3e9f0'];
 const GLASS = '#2a3a4c';
+// v2 houses: per-type [wall, roof, stone] families (close to the procedural prefabs'; workshops get lighter plaster so their
+// timber frame reads, and brick or stone chimneys); accents are flowers, shutters and awnings
+const V2 = { tent: [['#e9dcc0', '#d9c39a', '#e7cfa2'], null], cabin: [null, ['#9a4e2a', '#7c4a2c', '#a8612f']], house: [WALLS, ROOFS],
+  tower: [['#e7ecef', '#d5dfe6', '#efe6d6', '#c7d6e2'], ['#4f6475', '#6b5b95', '#3f7f8c']],
+  workshop: [['#efdcb8', '#e8c99a', '#f1e4cc', '#e6b98a'], ['#56606b', '#3f7f8c', '#8a4a2c', '#5f6f4a'], ['#9a958c', '#9c5f48', '#a8826a']], round: [['#e2d6bd', '#d6c8a8', '#ece4d2'], ['#4a78b0']] };
+const ACCENTS = ['#d9534f', '#e0a73a', '#3f7f8c', '#5b8c5a', '#c06c9b'];
 
 function windows(k, w, d, y, count, lit, r) {
   for (let i = 0; i < count; i++) {
@@ -234,6 +294,7 @@ function campfire(k, x, z) {
   k.add(G.cone8, '#ffd23a', x, 0.02, z, 0.05, 0.17, 0.05, { glow: 2 });
 }
 function tent(k, r) {
+  if (HM) { const t = hStack(k, r, 0, 'tent', [pick(r, ['tent_a', 'tent_b'])]).top; campfire(k, 0.45, 0.25); return t + 0.1; }
   k.add(G.cone4, pick(r, ['#e9dcc0', '#d9c39a', '#e7cfa2']), 0, 0, 0, 0.36, 0.5, 0.36);
   k.add(G.box, '#5a3b22', 0, 0, 0.2, 0.12, 0.2, 0.04);
   campfire(k, 0.45, 0.25);
@@ -242,6 +303,7 @@ function tent(k, r) {
   return 0.55;
 }
 function cabin(k, r, lit) {
+  if (HM) return hStack(k, r, lit, 'cabin', [pick(r, ['cabin_a', 'cabin_b', 'cabin_c'])]).top + 0.1;
   const w = 0.6, d = 0.5, h = 0.4;
   for (let i = 0; i < 4; i++) k.add(G.box, WOOD[i % 2], 0, i * h / 4, 0, w, h / 4, d);
   k.add(G.roof, pick(r, ['#9a4e2a', '#7c4a2c', '#a8612f']), 0, h, 0, w + 0.18, 0.62, d + 0.14);
@@ -252,6 +314,7 @@ function cabin(k, r, lit) {
   return h + 0.3;
 }
 function house(k, r, lit, floors) {
+  if (HM) return hStack(k, r, lit, 'house', [pick(r, ['house_ground_a', 'house_ground_b']), ...(floors > 1 ? [pick(r, ['house_upper_a', 'house_upper_b'])] : []), pick(r, ['house_roof_a', 'house_roof_b', 'house_roof_c'])]).top + 0.05;
   const w = 0.62, d = 0.52, fh = 0.34, h = fh * floors;
   k.add(G.box, pick(r, WALLS), 0, 0, 0, w, h, d);
   k.add(G.box, '#c9c1b2', 0, 0, 0, w + 0.03, 0.06, d + 0.03);
@@ -262,6 +325,7 @@ function house(k, r, lit, floors) {
   return h + 0.3;
 }
 function tower(k, r, lit, floors) {
+  if (HM) { const fl = pick(r, ['tower_floor_a', 'tower_floor_b']); return hStack(k, r, lit, 'tower', ['tower_base', ...Array.from({ length: floors - 1 }, () => (r() < 0.7 ? fl : 'tower_floor_a')), pick(r, ['tower_top_a', 'tower_top_b'])]).top; }
   const w = 0.62, fh = 0.3, h = fh * floors;
   const wall = pick(r, ['#e7ecef', '#d5dfe6', '#efe6d6', '#c7d6e2']);
   k.add(G.box, '#bfb7a8', 0, 0, 0, w + 0.06, 0.12, w + 0.06);
@@ -273,6 +337,7 @@ function tower(k, r, lit, floors) {
   return h + 0.2;
 }
 function workshop(k, r, lit, big) {
+  if (HM) { const { top, m } = hStack(k, r, lit, 'workshop', [big ? 'workshop_big' : pick(r, ['workshop_a', 'workshop_b'])]); return { h: top, smoke: new THREE.Vector3(...m.smoke) }; }
   const w = big ? 0.78 : 0.66, d = 0.52, h = big ? 0.5 : 0.36;
   k.add(G.box, pick(r, ['#c4784a', '#d9c4a0', '#b8643c', '#e0b07a']), 0, 0, 0, w, h, d);
   k.add(G.roof, pick(r, ['#56606b', '#3f7f8c', '#8a4a2c', '#5f6f4a']), 0, h, 0, d + 0.1, 0.4, w + 0.1, { ry: Math.PI / 2 });
@@ -284,6 +349,7 @@ function workshop(k, r, lit, big) {
   return { h: h + 0.35, smoke: new THREE.Vector3(cx, ch + 0.05, cz) };
 }
 function roundTower(k, r, lit, floors) {
+  if (HM) return hStack(k, r, lit, 'round', ['roundtower_base', ...Array.from({ length: floors - 1 }, () => pick(r, ['roundtower_floor_a', 'roundtower_floor_b'])), floors > 1 ? 'roundtower_dome' : 'roundtower_cone']).top + 0.1;
   const h = 0.32 * floors + 0.2;
   k.add(G.cylHi, pick(r, ['#e2d6bd', '#d6c8a8', '#ece4d2']), 0, 0, 0, 0.3, h, 0.3);
   for (let f = 0; f < floors; f++) for (let i = 0; i < 4; i++) {
@@ -2103,6 +2169,7 @@ async function loadWorld(fresh) {
   for (const el of ['#empty', '#stats', '#roster']) $(el).style.visibility = '';
   $('#empty').style.display = data.projects.length ? 'none' : 'grid';
   if (!data.projects.length) for (const el of ['#stats', '#roster']) $(el).style.visibility = 'hidden';
+  if (HOUSES && !HM) await loadHouses().catch(e => console.warn('house models unavailable, using classic', e));
   const first = !M;
   const prevR = new Map(M ? M.projects.map(p => [p.cwd, p.Rcur]) : []);
   M = buildModel(data);
