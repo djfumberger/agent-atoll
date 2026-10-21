@@ -1,6 +1,6 @@
 # Agent Atoll
 
-The same data as Claude City, drawn as an archipelago. A project starts as a tiny sandbar with a tent and campfire, and grows into an outpost, then a village, a town, and finally a city as sessions accumulate.
+Your coding-agent history, drawn as an archipelago. A project starts as a tiny sandbar with a tent and campfire, and grows into an outpost, then a village, a town, and finally a city as sessions accumulate.
 
 ```
 node islands/server.mjs   # → http://localhost:4778

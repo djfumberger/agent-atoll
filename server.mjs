@@ -12,7 +12,7 @@ import { askVillager, askCrier } from './npc.mjs';
 import { healthFor } from './health.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-let ROOT = path.join(HERE, 'public');
+let ROOT = path.join(HERE, 'islands', 'public');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png' };
 
 // ~/.agent-atoll/config.json → { "exclude": ["project-name" | "/abs/path", …], "aliases": { "ac": "acme" } }.
@@ -112,7 +112,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 // Serves `publicDir` on the first free port from `port` up; resolves with the port actually used.
-export function start({ port = 4777, publicDir = ROOT, tries = 20 } = {}) {
+export function start({ port = 4778, publicDir = ROOT, tries = 20 } = {}) {
   ROOT = publicDir;
   return new Promise((resolve, reject) => {
     const attempt = p => {
@@ -124,6 +124,6 @@ export function start({ port = 4777, publicDir = ROOT, tries = 20 } = {}) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const p = await start({ port: Number(process.env.PORT || 4777) });
-  console.log(`Claude City → http://localhost:${p}`);
+  const p = await start({ port: Number(process.env.PORT || 4778) });
+  console.log(`Agent Atoll → http://localhost:${p}`);
 }

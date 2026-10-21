@@ -1,7 +1,7 @@
 {
   "name": "agent-atoll",
   "version": "0.1.0",
-  "description": "See your Claude Code and Codex projects and sessions as a living archipelago (or an isometric city): islands grow from your history, live sessions build, CI failures bring storms.",
+  "description": "See your Claude Code and Codex projects and sessions as a living archipelago: islands grow from your history, live sessions build, CI failures bring storms.",
   "type": "module",
   "bin": {
     "agent-atoll": "bin/agent-atoll.mjs"
@@ -13,7 +13,6 @@
     "codex.mjs",
     "npc.mjs",
     "health.mjs",
-    "public/",
     "islands/public/",
     "islands/server.mjs",
     "README.md",
@@ -30,8 +29,7 @@
     "three.js"
   ],
   "scripts": {
-    "start": "node bin/agent-atoll.mjs",
-    "city": "node bin/agent-atoll.mjs --city"
+    "start": "node bin/agent-atoll.mjs"
   },
   "license": "MIT",
   "author": "David Fumberger",
