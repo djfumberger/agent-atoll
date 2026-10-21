@@ -5,7 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import zlib from 'node:zlib';
 import readline from 'node:readline';
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn, execFile, execFileSync } from 'node:child_process';
 
 const CODEX = process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
 const SESSIONS = path.join(CODEX, 'sessions');
@@ -164,6 +164,13 @@ export function readCodexLive() {
       startedAt: cache[f]?.data?.start ?? st.birthtimeMs, updatedAt: st.mtimeMs, tool: names.at(-1) ?? null, busy });
   }
   return out;
+}
+
+// The Codex process keeps its rollout open while it runs, so lsof on that file finds it.
+export function codexPid(sessionId) {
+  const f = walk(SESSIONS).find(f => !f.endsWith('.zst') && f.includes(sessionId));
+  if (!f) return null;
+  return new Promise(res => execFile('lsof', ['-t', f], (err, out) => res(+String(out).trim().split('\n')[0] || null)));
 }
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(new URL(import.meta.url).pathname)) {

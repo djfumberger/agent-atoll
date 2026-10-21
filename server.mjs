@@ -7,7 +7,7 @@ import os from 'node:os';
 import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { scan, readLive, lastActivity } from './scan.mjs';
-import { readCodexLive } from './codex.mjs';
+import { readCodexLive, codexPid } from './codex.mjs';
 import { askVillager, askCrier } from './npc.mjs';
 import { healthFor } from './health.mjs';
 
@@ -67,6 +67,59 @@ function openTerminal(cwd, sessionId, agent) {
   ], err => (err ? rej(err) : res({ cmd }))));
 }
 
+// Bring the terminal tab a live agent runs in to the front: walk up from the agent's process to the
+// app hosting it, then pick the tab by its tty (Terminal and iTerm2) or just activate the app.
+const run = (cmd, args) => new Promise(res => execFile(cmd, args, (err, out) => res(err ? '' : out.trim())));
+async function focusTerminal(pid) {
+  if (process.platform !== 'darwin') return { error: 'Focusing a terminal only works on macOS for now.' };
+  const tty = (await run('ps', ['-o', 'tty=', '-p', String(pid)])).replace(/^\?+$/, '');
+  let app = null;
+  for (let p = pid, i = 0; p > 1 && i < 30 && !app; i++) {
+    const [ppid, ...comm] = (await run('ps', ['-o', 'ppid=,comm=', '-p', String(p)])).split(/\s+/);
+    if (!ppid) break;
+    app = comm.join(' ').match(/^(\/.*?\.app)\//)?.[1] ?? null;
+    p = +ppid;
+  }
+  if (!app) return { error: "Couldn't find the window this agent is running in (tmux and ssh sessions aren't supported)." };
+  const dev = `/dev/${tty}`, name = path.basename(app, '.app');
+  if (tty && name === 'Terminal') {
+    const r = await run('osascript', ['-e', `tell application "Terminal"
+      repeat with w in windows
+        repeat with t in tabs of w
+          if tty of t is "${dev}" then
+            set miniaturized of w to false
+            set selected of t to true
+            set index of w to 1
+            activate
+            return "ok"
+          end if
+        end repeat
+      end repeat
+    end tell`]);
+    if (r === 'ok') return { app: name };
+  }
+  if (tty && name === 'iTerm') {
+    const r = await run('osascript', ['-e', `tell application "iTerm2"
+      repeat with w in windows
+        repeat with t in tabs of w
+          repeat with s in sessions of t
+            if tty of s is "${dev}" then
+              select w
+              select t
+              select s
+              activate
+              return "ok"
+            end if
+          end repeat
+        end repeat
+      end repeat
+    end tell`]);
+    if (r === 'ok') return { app: name };
+  }
+  await run('open', ['-a', app]);
+  return { app: name, approx: true };
+}
+
 const readBody = async req => { let b = ''; for await (const chunk of req) b += chunk; return JSON.parse(b || '{}'); };
 const json = (res, code, body) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
 
@@ -81,6 +134,14 @@ const server = http.createServer(async (req, res) => {
       if (!c.projects.some(p => p.cwd === cwd)) return json(res, 400, { error: 'unknown project' });
       if (sessionId && !/^[0-9a-f-]{36}$/.test(sessionId)) return json(res, 400, { error: 'bad session id' });
       return json(res, 200, { ok: true, ...await openTerminal(cwd, sessionId, agent) });
+    }
+    if (url.pathname === '/api/focus' && req.method === 'POST') {
+      const { sessionId } = await readBody(req);
+      const s = live().find(l => l.sessionId === sessionId);
+      if (!s) return json(res, 400, { error: 'That session is no longer running.' });
+      const pid = s.pid ?? (s.source === 'codex' ? await codexPid(sessionId) : null);
+      if (!pid) return json(res, 200, { error: "Couldn't find this agent's process." });
+      return json(res, 200, await focusTerminal(pid));
     }
     if (url.pathname === '/api/npc' && req.method === 'POST') {
       const b = await readBody(req);

@@ -2002,6 +2002,10 @@ async function openTerminal(cwd, sessionId, agent) {
   if (r.error) alert(r.error);
   else if (r.manual) { try { await navigator.clipboard.writeText(r.cmd); alert(`Copied to clipboard, paste it into a terminal:\n\n${r.cmd}`); } catch { prompt('Run this in a terminal:', r.cmd); } }
 }
+async function focusTerminal(sessionId) {
+  const r = await api('/api/focus', { sessionId });
+  if (r.error) alert(r.error);
+}
 const resumeCmd = (cwd, id, agent) => `cd '${cwd.replace(/'/g, `'\\''`)}' && ${agent === 'codex' ? `codex${id ? ` resume ${id}` : ''}` : `claude${id ? ` --resume ${id}` : ''}`}`;
 const AGENT_NAME = { claude: 'Claude Code', codex: 'Codex' };
 function toolBar(tools) {
@@ -2032,9 +2036,11 @@ function showSession(b) {
     </div>
     <h4 class="title">Activity</h4>${toolBar(s.tools)}
     <div style="color:var(--dim);font-size:11px;margin-top:4px">${esc(top)}</div>
-    <div class="actions"><button data-open>Resume in ${s.source === 'codex' ? 'Codex' : 'Terminal'}</button><button data-copy>Copy command</button></div>
+    <div class="actions">${live ? '<button data-focus>Focus terminal</button>' : `<button data-open>Resume in ${s.source === 'codex' ? 'Codex' : 'Terminal'}</button>`}<button data-copy>Copy command</button></div>
     <div class="mono" style="color:var(--dim);word-break:break-all">${esc(s.id)}</div>`;
-  pbody.querySelector('[data-open]').onclick = () => openTerminal(b.p.cwd, s.id, s.source);
+  const open = pbody.querySelector('[data-open]'), focus = pbody.querySelector('[data-focus]');
+  if (open) open.onclick = () => openTerminal(b.p.cwd, s.id, s.source);
+  if (focus) focus.onclick = () => focusTerminal(s.id);
   pbody.querySelector('[data-copy]').onclick = () => navigator.clipboard.writeText(resumeCmd(b.p.cwd, s.id, s.source));
   pbody.querySelector('[data-proj]').onclick = e => { e.preventDefault(); showProject(b.p); };
   panel.style.display = 'block';
@@ -2096,8 +2102,9 @@ function renderRoster() {
     if (!list.length) return '';
     return `<h3 class="title">${title} · ${list.length}</h3>` + list.map(s => `
       <div class="row" data-live="${s.sessionId}"><span class="dot" style="background:${STATUS_COLOR[st]}"></span>
-      <span class="nm">${esc(s.name)}</span><span class="meta">${st === 'busy' && s.tool ? esc(s.tool) + ' · ' : ''}${ago(s.updatedAt)}</span></div>`).join('');
+      <span class="nm">${esc(s.name)}</span><span class="meta">${st === 'busy' && s.tool ? esc(s.tool) + ' · ' : ''}${ago(s.updatedAt)}</span><button class="focus" title="Focus terminal" aria-label="Focus terminal">↗</button></div>`).join('');
   }).join('') || '<div style="color:var(--dim)">No live sessions</div>';
+  $('#roster').querySelectorAll('.focus').forEach(el => (el.onclick = e => { e.stopPropagation(); focusTerminal(el.closest('[data-live]').dataset.live); }));
   $('#roster').querySelectorAll('[data-live]').forEach(el => (el.onclick = () => {
     const s = LIVE.find(s => s.sessionId === el.dataset.live), b = s.building;
     flyTo(s.project.cx + (b?.lx ?? 0), s.project.cz + (b?.lz ?? 0), 16);

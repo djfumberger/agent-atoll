@@ -121,6 +121,7 @@ Start with the tide-api storm: everything downstream sails through it.`;
       if (path === '/api/health') return health;
       if (path === '/api/crier') return { text: /gazette/i.test(body?.question ?? '') ? GAZETTE : DEMO_REPLY };
       if (path === '/api/npc') return { text: DEMO_REPLY };
+      if (path === '/api/focus') return { error: 'In the demo there is no terminal to focus. Install it and this jumps to the tab your agent is running in.' };
       if (path === '/api/open') return { error: 'In the demo there is no terminal to open. Install it to resume your own sessions.' };
       return {};
     },

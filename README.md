@@ -32,6 +32,8 @@ Optional extras:
 
 "Resume in Terminal" opens Terminal.app on macOS. Elsewhere it copies the command for you to paste.
 
+**Focus terminal** (the ↗ next to each live agent, or the button on a live session) brings the tab that agent is running in to the front: the exact tab in Terminal.app and iTerm2, or just the app for other terminals. macOS only, and not inside tmux.
+
 **Codex:** sessions come from `~/.codex/sessions` (plain or `.zst` rollouts). They join the same islands as Claude sessions, fly a small pennant, and resume with `codex resume <id>`. Codex has no live-status file, so a rollout written in the last two minutes counts as live.
 
 ## Development
