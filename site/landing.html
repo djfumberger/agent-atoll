@@ -52,10 +52,6 @@
   .card i { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--amber); }
   .card.on.auto i { animation: dwell var(--dwell) linear forwards; }
   @keyframes dwell { to { width: 100%; } }
-  #pager { display: flex; justify-content: center; align-items: center; gap: 4px; margin-bottom: 6px; }
-  #pager button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--glass); color: var(--ink); font: 16px/1 var(--sans); cursor: pointer; backdrop-filter: blur(8px); }
-  #pager button:hover { border-color: rgba(255,210,122,0.75); color: var(--amber); }
-  #count { min-width: 64px; text-align: center; font: 500 12px var(--sans); color: var(--dim); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
 
   #gh { margin-left: auto; display: flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; color: var(--ink); text-decoration: none; font: 500 13px var(--sans); background: rgba(8,22,38,0.5); border: 1px solid var(--line); backdrop-filter: blur(8px); }
   #gh:hover { border-color: rgba(255,210,122,0.75); } #gh svg { width: 16px; height: 16px; }
@@ -77,12 +73,11 @@
 <div id="scrim"></div>
 <main id="hero">
   <h1>Your coding agents,<br>as a living archipelago.</h1>
-  <p class="lede">Every project becomes an island and every session raises a building. Watch your Claude Code and Codex agents work in real time, sail between connected repos, and see storms roll in when CI fails.</p>
+  <p class="lede">Watch Claude Code and Codex build your islands.</p>
   <div class="install"><code id="cmd">npx __SITE__/agent-atoll.tgz</code><button id="copy">Copy</button></div>
   <p class="fine">Needs Node 18+. <b>Runs on your machine</b>: it reads <span class="mono">~/.claude</span> and <span class="mono">~/.codex</span>, and nothing is uploaded.</p>
 </main>
 <section id="features" aria-label="Features">
-  <div id="pager"><button id="prev" aria-label="Previous feature">‹</button><span id="count"></span><button id="next" aria-label="Next feature">›</button></div>
   <div id="strip"></div>
 </section>
 <header id="bar">
@@ -158,7 +153,6 @@
       active = i;
       const f = FEATURES[i];
       cards.forEach((c, k) => { c.classList.toggle('on', k === i); c.classList.toggle('auto', auto && k === i); });
-      document.getElementById('count').textContent = `${i + 1} / ${FEATURES.length}`;
       if (scroll) { ignoreScroll = true; cards[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); setTimeout(() => (ignoreScroll = false), 700); }
       if (I.touring) I.endTour();
       I.closeDialog();
@@ -185,8 +179,6 @@
     const stopAuto = () => { if (!auto) return; auto = false; clearTimeout(timer); cards.forEach(c => c.classList.remove('auto')); };
 
     cards.forEach((c, i) => (c.onclick = () => { stopAuto(); focus(i); }));
-    document.getElementById('next').onclick = () => { stopAuto(); focus((Math.max(active, 0) + 1) % FEATURES.length); };
-    document.getElementById('prev').onclick = () => { stopAuto(); focus((active - 1 + FEATURES.length) % FEATURES.length); };
     addEventListener('keydown', e => {
       if (e.target.closest('input, textarea')) return;
       if (e.key === 'ArrowRight') { stopAuto(); focus((active + 1) % FEATURES.length); }
