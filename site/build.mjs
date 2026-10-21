@@ -27,9 +27,9 @@ fs.writeFileSync(path.join(OUT, 'index.html'), html);
 fs.copyFileSync(path.join(APP, 'islands.js'), path.join(OUT, 'islands.js'));
 fs.cpSync(path.join(APP, 'models'), path.join(OUT, 'models'), { recursive: true });
 fs.copyFileSync(path.join(SITE, 'demo.js'), path.join(OUT, 'demo.js'));
-// favicon: the header's mono mark, cream on a deep-sea tile
-const mark = landing.match(/<svg class="mark"[^]*?>([^]*?)<\/svg>/)[1].replaceAll('currentColor', '#fff8ea');
-fs.writeFileSync(path.join(OUT, 'favicon.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0b2a4a"/><g transform="translate(2.4 1.6) scale(.85)">${mark}</g></svg>`);
+// favicon: the header's mark, cream on a deep-sea tile, with a heavier stroke so it survives 16px
+const mark = landing.match(/<svg class="mark"[^]*?>([^]*?)<\/svg>/)[1].replaceAll('currentColor', '#fff8ea').replace('stroke-width="310"', 'stroke-width="400"');
+fs.writeFileSync(path.join(OUT, 'favicon.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-700 -800 4865 4865"><rect x="-700" y="-800" width="4865" height="4865" rx="1050" fill="#0b2a4a"/><g fill="none">${mark}</g></svg>`);
 if (fs.existsSync(path.join(SITE, 'og.png'))) fs.copyFileSync(path.join(SITE, 'og.png'), path.join(OUT, 'og.png'));
 
 const tgz = execFileSync('npm', ['pack', '--silent', '--pack-destination', OUT], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n').pop();

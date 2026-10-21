@@ -22,7 +22,7 @@
   #bar { position: fixed; z-index: 5; top: 0; left: 0; right: 0; height: 64px; padding: 0 22px; display: flex; align-items: center; gap: 12px; pointer-events: none; }
   #bar > * { pointer-events: auto; }
   #mark { display: flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; }
-  #mark svg { width: 30px; height: 30px; }
+  #mark svg { height: 26px; width: auto; }
   #mark span { font: 650 19px var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; letter-spacing: -0.01em; }
   #hero h1 { font: 700 clamp(38px, 4.8vw, 68px)/1.02 var(--display); font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144; margin: 0 0 16px; color: var(--ink); letter-spacing: -0.02em; text-shadow: 0 4px 24px rgba(0,20,40,0.5); }
   #hero p.lede { font-size: 17px; line-height: 1.55; color: var(--dim); margin: 0 auto 22px; max-width: 590px; text-shadow: 0 1px 8px rgba(0,20,40,0.6); }
@@ -87,10 +87,10 @@
 </section>
 <header id="bar">
   <a id="mark" href="./" aria-label="Agent Atoll">
-    <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <!-- one sine wave whose crest, with a dot for its crossbar, is an "A" -->
-      <path d="M1.5 17c1.6 3.6 3 6 5 6 3.6 0 6-17 9.5-17s5.9 17 9.5 17c2 0 3.4-2.4 5-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="16" cy="16.4" r="2.1" fill="currentColor"/>
+    <svg class="mark" viewBox="0 0 3465 3146" fill="none" aria-hidden="true">
+      <!-- one stroke: an A, a face in profile (the dot is its eye) -->
+      <path d="M2560 2800C2470 2000 2300 155 1432.5 155C649.5 155.001 155 2299 155 2844C155 3255.01 1259.5 2673 1259.5 2673" stroke="currentColor" stroke-width="310" stroke-linecap="round"/>
+      <circle cx="1398" cy="1815.5" r="259" fill="currentColor"/>
     </svg>
     <span>Agent Atoll</span>
   </a>
