@@ -8,8 +8,6 @@ Your Claude Code and Codex history as a living archipelago. Every project folder
 
 ```
 npx agent-atoll
-# or straight from this repo
-npx github:djfumberger/agent-atoll
 ```
 
 Demo with sample projects: https://agent-atoll.pages.dev
