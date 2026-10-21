@@ -7,7 +7,7 @@ Your Claude Code and Codex history as a living archipelago. Every project folder
 ## Quick start
 
 ```
-npx https://agent-atoll.pages.dev/agent-atoll.tgz
+npx agent-atoll
 # or straight from this repo
 npx github:djfumberger/agent-atoll
 ```

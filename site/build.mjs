@@ -1,5 +1,6 @@
 // Builds the landing site into site/dist: the real islands page running on demo data with a hero on
-// top, plus the npm tarball so friends can `npx <site>/agent-atoll.tgz` without an npm publish.
+// top, plus a copy of the npm tarball
+// (`npx <site>/agent-atoll.tgz`) as a fallback to `npx agent-atoll`.
 // SITE_URL=https://agent-atoll.pages.dev node site/build.mjs
 import fs from 'node:fs';
 import path from 'node:path';
