@@ -909,7 +909,8 @@ function buildWorld(model) {
       const y = 0.22 + Math.sin(Math.PI * u) * 0.3;
       bridges.born = p.startDay + u * 1.2 * U.grow.value + 0.02;
       bridges.frame(pos.x, y, pos.z, ry);
-      bridges.add(G.box, i % 2 ? '#a0703f' : '#8f6236', 0, 0, 0, 0.5, 0.04, 0.15);
+      // pitch each plank to the arch so neighbours don't stack like stairs and cut into each other
+      bridges.add(G.box, i % 2 ? '#a0703f' : '#8f6236', 0, 0, 0, 0.5, 0.04, 0.15, { rx: -Math.atan(0.3 * Math.PI * Math.cos(Math.PI * u) / len) });
       if (i % 4 === 0) for (const sx of [-0.24, 0.24]) {
         bridges.add(G.cyl, '#6b4423', sx, -y - 0.4, 0, 0.025, y + 0.62, 0.025);
         if (i < n) bridges.add(G.cyl, '#d8c49a', sx, 0.2, 0, 0.008, 4 * len / n, 0.008, { rx: Math.PI / 2 - Math.atan2(Math.sin(Math.PI * (u + 2 / n)) * 0.3 - Math.sin(Math.PI * u) * 0.3, 4 * len / n) });

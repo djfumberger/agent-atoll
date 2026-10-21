@@ -2,6 +2,8 @@
 
 Your Claude Code and Codex history as a living archipelago. Every project folder is an island, every session a building, live agents build in real time, and repo health shows up as weather and harbour life.
 
+![Agent Atoll](https://raw.githubusercontent.com/djfumberger/agent-atoll/main/docs/screenshot.png)
+
 ## Quick start
 
 ```
